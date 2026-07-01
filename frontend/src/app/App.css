@@ -1,0 +1,35 @@
+.App {
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+}
+
+body:before {
+  content: "";
+  position: fixed;
+  background-image: url(../shared/assets/pattern.svg);
+  background-repeat: repeat-y;
+  background-position: right top;
+  width: 40%;
+  height: 100vh;
+  z-index: -1;
+  top: 0;
+  fill: #0074001f;
+  right: -3%;
+}
+
+body:after {
+  content: "";
+  position: fixed;
+  background-image: url(../shared/assets/pattern.svg);
+  background-repeat: repeat-y;
+  background-position: left top;
+  width: 40%;
+  height: 100vh;
+  z-index: -1;
+  top: 0;
+  fill: #0074001f;
+  left: -3%;
+}

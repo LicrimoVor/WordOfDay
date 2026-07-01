@@ -1,0 +1,49 @@
+.FormPage {
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+}
+
+
+.FormPageCard {
+    padding: 12px;
+    width: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 24px;
+    backdrop-filter: blur(10px);
+}
+
+.is_singleton {
+    background-color: #f0000025;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    position: relative;
+    overflow: hidden;
+}
+    
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background-color: #4caf50;
+    animation: fillAnimation 5s linear forwards;
+}
+
+@keyframes fillAnimation {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}

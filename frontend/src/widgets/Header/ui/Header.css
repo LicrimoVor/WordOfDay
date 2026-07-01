@@ -1,0 +1,25 @@
+.Header {
+    justify-content: center;
+    width: 100%;
+    min-height: 48px;
+    max-height: 64px;
+    padding: 2px;
+    background: var(--g-color-base-generic);
+    place-items: center;
+
+    display: grid;
+    grid-template-areas:
+        'headerLeft headerCenter headerRigth';
+    grid-template-columns: 10% 80% 10%;
+}
+
+.headerRigth {
+    grid-area: headerRigth;
+    margin-left: auto;
+}
+
+.headerCenter {
+    grid-area: headerCenter;
+    max-height: 100%;
+    overflow: auto;
+}
