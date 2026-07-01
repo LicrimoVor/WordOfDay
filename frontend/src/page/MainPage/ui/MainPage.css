@@ -1,16 +1,3 @@
-.MainPageLocoPanel {
-    width: 100%;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    max-width: 400px;
-    max-height: 400px;
-}
-
-
-.MainPageBtn{
-    display: flex;
-    width: 85px;
+.MainPage {
+    min-height: 100vh;
 }

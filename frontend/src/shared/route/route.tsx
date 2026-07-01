@@ -1,8 +1,9 @@
 import { ReactNode } from 'react';
 
-import { MainPage } from '@/page/MainPage';
-import { FormPage } from '@/page/FormPage';
 import { AdminPage } from '@/page/AdminPage';
+import { CreateRoomPage } from '@/page/CreateRoomPage';
+import { FormPage } from '@/page/FormPage';
+import { MainPage } from '@/page/MainPage';
 
 interface Route {
     path: string;
@@ -10,22 +11,26 @@ interface Route {
 }
 
 const enum AppPages {
+    CREATE = 'CREATE',
     MAIN = 'MAIN',
     FORM = 'FORM',
     ADMIN = 'ADMIN',
-
     NOT_FOUND = 'NOT_FOUND',
 }
 
 export const AppRoutes: Record<AppPages, string> = {
-    [AppPages.MAIN]: '/',
-    [AppPages.FORM]: '/add/',
-    [AppPages.ADMIN]: '/admin_123/',
-
+    [AppPages.CREATE]: '/',
+    [AppPages.MAIN]: '/room/:roomId',
+    [AppPages.FORM]: '/room/:roomId/send',
+    [AppPages.ADMIN]: '/room/:roomId/admin',
     [AppPages.NOT_FOUND]: '/*',
 };
 
 export const routeConfig: Record<AppPages, Route> = {
+    [AppPages.CREATE]: {
+        path: AppRoutes.CREATE,
+        element: <CreateRoomPage />,
+    },
     [AppPages.MAIN]: {
         path: AppRoutes.MAIN,
         element: <MainPage />,
@@ -38,9 +43,8 @@ export const routeConfig: Record<AppPages, Route> = {
         path: AppRoutes.ADMIN,
         element: <AdminPage />,
     },
-
     [AppPages.NOT_FOUND]: {
         path: AppRoutes.NOT_FOUND,
-        element: <>Нечего шариться!</>,
+        element: <CreateRoomPage />,
     },
 };

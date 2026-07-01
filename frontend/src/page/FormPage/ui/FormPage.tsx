@@ -1,119 +1,146 @@
-import { FC, memo, useCallback, useEffect, useState } from 'react';
-import { Button, Card, Icon, Text, TextInput } from '@gravity-ui/uikit';
+import { CSSProperties, FC, FormEvent, memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 
-import { hasBadWords } from '@/shared/lib/hasBadWords';
-import { useGlobalContext } from '@/shared/contex/contex';
-import { Data } from '@/shared/const/settings';
-import Logo from '@/shared/assets/irgups-logo-vertical.png';
-import { TConfig } from '@/shared/types/config';
+import { getRoom, RoomPublic, submitWord } from '@/shared/api/client';
 
-import { subscribeWord } from '../model/services/subscribeWord';
-import { subscribeConfig } from '../model/services/subscribeConfig';
 import './FormPage.css';
 
-/** Главная страница */
 export const FormPage: FC = memo(() => {
+    const { roomId } = useParams();
+    const [room, setRoom] = useState<RoomPublic | null>(null);
     const [text, setText] = useState('');
-    const [isBadWord, setIsBadWord] = useState(false);
-    const [data, setData] = useState<Data>({});
-    const [config, setConfig] = useState<TConfig>({
-        t_updated: 0,
-        is_singleton: false,
-    });
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+    const [cooldownUntil, setCooldownUntil] = useState(0);
+    const [now, setNow] = useState(Date.now());
     const [isPending, setIsPending] = useState(false);
-    const { state } = useGlobalContext();
 
-    useEffect(() => {
-        if (state.client == undefined) return;
-        subscribeConfig(state.client, setConfig);
-    }, [state, setConfig]);
-
-    useEffect(() => {
-        if (state.client == undefined) return;
-        subscribeWord(state.client, setData);
-    }, [state, setData]);
-
-    useEffect(() => {
-        if (config.is_singleton) {
-            const last_time = localStorage.getItem('last_time') || 0;
-            if (config.t_updated != last_time) {
-                setIsPending(false);
-            } else {
-                setIsPending(true);
-            }
+    const loadRoom = useCallback(async () => {
+        if (!roomId) {
+            return;
         }
-    }, [isPending, setIsPending, config]);
 
-    const onSubmit = useCallback(() => {
-        if (state.client == undefined || text == '') return;
-        if (hasBadWords(text)) {
-            setIsBadWord(true);
-        } else {
-            if (config.is_singleton) {
-                const last_time = localStorage.getItem('last_time') || 0;
-                if (config.t_updated == last_time) {
-                    return;
-                } else {
-                    localStorage.setItem('last_time', String(config.t_updated));
+        try {
+            setRoom(await getRoom(roomId));
+            setError('');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Комната недоступна');
+        }
+    }, [roomId]);
+
+    useEffect(() => {
+        loadRoom();
+    }, [loadRoom]);
+
+    useEffect(() => {
+        const intervalId = window.setInterval(() => setNow(Date.now()), 250);
+        return () => window.clearInterval(intervalId);
+    }, []);
+
+    const cooldownLeft = useMemo(() => {
+        return Math.max(0, Math.ceil((cooldownUntil - now) / 1000));
+    }, [cooldownUntil, now]);
+
+    const onSubmit = async (event: FormEvent) => {
+        event.preventDefault();
+        if (!roomId || !text.trim() || isPending || cooldownLeft > 0) {
+            return;
+        }
+
+        setIsPending(true);
+        setMessage('');
+        setError('');
+
+        try {
+            const response = await submitWord(roomId, text);
+            setMessage(response.message);
+            if (response.accepted) {
+                setText('');
+                setRoom((currentRoom) =>
+                    currentRoom
+                        ? {
+                              ...currentRoom,
+                              words: response.words,
+                              stats: response.stats,
+                          }
+                        : currentRoom,
+                );
+                if (room?.config.cooldown_seconds) {
+                    setCooldownUntil(Date.now() + room.config.cooldown_seconds * 1000);
                 }
             }
-            setIsBadWord(false);
-            const newData: Data = { ...data };
-            const finded = Object.entries(data).some(([key, val]) => {
-                if (val.text == text) {
-                    newData[key].count += 5;
-                    return true;
-                }
-            });
-            if (!finded) {
-                let maxKey = 0;
-                Object.keys(data).map((key) => {
-                    if (Number(key) > maxKey) {
-                        maxKey = Number(key);
-                    }
-                });
-                maxKey += 1;
-                newData[String(maxKey)] = {
-                    text,
-                    count: 1,
-                };
-            }
-            setData(newData);
-            setIsPending(true);
-            state.client.publish('words/data', JSON.stringify(newData), { retain: true });
-
-            if (!config.is_singleton) {
-                const timeId = setTimeout(() => setIsPending(false), 5_000);
-                return () => clearTimeout(timeId);
-            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Не удалось отправить слово');
+        } finally {
+            setIsPending(false);
         }
-    }, [text, data, setIsBadWord, state, setData]);
+    };
+
+    if (!roomId) {
+        return null;
+    }
+
+    if (error && !room) {
+        return (
+            <main className="FormPage FormPage_state">
+                <h1>{error}</h1>
+                <Link to="/">Создать комнату</Link>
+            </main>
+        );
+    }
+
+    const title = room?.config.title || 'Слово дня';
+    const maxLength = room?.config.max_word_length || 24;
 
     return (
-        <div className="FormPage">
-            <img src={Logo} style={{ width: 62.4 * 2, height: 80 * 2 }} />
-            <Card className="FormPageCard">
-                <Text variant="header-1">Введи любой тег</Text>
-                <TextInput
-                    placeholder="ВузКоторымЯГоржусь"
-                    onChange={(e) => setText(e.target.value)}
-                ></TextInput>
-                <Button
-                    size="xl"
-                    type="submit"
-                    onClick={onSubmit}
-                    disabled={isPending}
-                    className={
-                        isPending
-                            ? config.is_singleton
-                                ? 'is_singleton'
-                                : 'progress-bar'
-                            : undefined
-                    }
-                >
-                    Отправить
-                </Button>
-            </Card>
-        </div>
+        <main
+            className="FormPage"
+            style={
+                {
+                    '--accent-color': room?.config.accent_color || '#1c7c54',
+                    backgroundColor: room?.config.background_color || '#f7fbf8',
+                } as CSSProperties
+            }
+        >
+            <section className="FormPage__shell">
+                <div className="FormPage__title">
+                    <span>{roomId}</span>
+                    <h1>{title}</h1>
+                </div>
+
+                <form className="FormPage__form" onSubmit={onSubmit}>
+                    <label>
+                        Ваше слово
+                        <input
+                            value={text}
+                            maxLength={maxLength}
+                            autoComplete="off"
+                            placeholder="Напишите коротко"
+                            onChange={(event) => setText(event.target.value)}
+                        />
+                    </label>
+                    <button disabled={isPending || !text.trim() || cooldownLeft > 0} type="submit">
+                        {cooldownLeft > 0
+                            ? `Подождите ${cooldownLeft}`
+                            : isPending
+                              ? 'Отправка...'
+                              : 'Отправить'}
+                    </button>
+                </form>
+
+                {(message || error) && (
+                    <p className={error ? 'FormPage__message FormPage__message_error' : 'FormPage__message'}>
+                        {error || message}
+                    </p>
+                )}
+
+                {room && (
+                    <div className="FormPage__stats">
+                        <span>Принято: {room.stats.accepted_submissions}</span>
+                        <span>Активны: {room.stats.active_users}</span>
+                    </div>
+                )}
+            </section>
+        </main>
     );
 });

@@ -1,147 +1,177 @@
-import { FC, memo, useEffect, useRef, useState } from 'react';
+import { CSSProperties, FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 
-import { useGlobalContext } from '@/shared/contex/contex';
-import { Data, MAX_COUNT, THRESHOLD, TIME_STEP } from '@/shared/const/settings';
+import { getRoom, RoomPublic, WordView } from '@/shared/api/client';
 
-import { subscribeWord } from '../model/services/subscribeWord';
 import { getColor } from '../model/libs/getColor';
-import { getShakingPos } from '../model/libs/getShakingPos';
+import { layoutWordsRadial, Pos } from '../model/libs/super_libs';
 
 import './WordsBackground.css';
-import { DataWord, useUpdateData } from '../model/libs/useUpdateData';
 
 interface WordsBackgroundProps {
-    className?: string;
+    roomId: string;
 }
 
-function limitString(str: string, maxLength: number): string {
-    return str.length > maxLength ? str.slice(0, maxLength) + '...' : str;
+function limitString(value: string, maxLength: number): string {
+    return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
 }
 
-/** Станция по имени */
-export const WordsBackground: FC<WordsBackgroundProps> = memo((props: WordsBackgroundProps) => {
-    const {
-        state: { statusMqtt, client },
-    } = useGlobalContext();
-    const [mqttData, setMqttData] = useState<
-        Record<
-            number,
-            {
-                text: string;
-                count: number;
-            }
-        >
-    >({});
-    const [wordData, setWordData] = useState<DataWord>({});
-    const [delTime, setDelTime] = useState(0);
+function roomPath(roomId: string, suffix = '') {
+    const base = import.meta.env.BASE_URL === '/' ? '' : import.meta.env.BASE_URL.replace(/\/$/, '');
+    return `${base}/room/${roomId}${suffix}`;
+}
+
+export const WordsBackground: FC<WordsBackgroundProps> = memo(({ roomId }) => {
+    const [room, setRoom] = useState<RoomPublic | null>(null);
+    const [error, setError] = useState('');
+    const [positions, setPositions] = useState<Record<string, Pos>>({});
     const refDiv = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        if (statusMqtt !== 'ready' || client === undefined) {
+    const loadRoom = useCallback(async () => {
+        try {
+            const nextRoom = await getRoom(roomId);
+            setRoom(nextRoom);
+            setError('');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Комната недоступна');
+        }
+    }, [roomId]);
+
+    const updatePositions = useCallback((words: WordView[]) => {
+        if (!refDiv.current) {
             return;
         }
-        subscribeWord(client, setMqttData);
-    }, [client, statusMqtt, setMqttData]);
 
-    // @ts-ignore
-    useUpdateData(mqttData, delTime, wordData, refDiv, setWordData);
+        const nextPositions = layoutWordsRadial(
+            refDiv.current,
+            words.map((word) => ({
+                key: word.id,
+                text: word.text,
+                count: word.score,
+            })),
+        );
+        setPositions(nextPositions);
+    }, []);
 
     useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            setDelTime(delTime + 0.1);
-        }, TIME_STEP);
-        return () => clearTimeout(timeoutId);
-    }, [delTime, setDelTime]);
+        loadRoom();
+        const intervalId = window.setInterval(loadRoom, 1200);
+        return () => window.clearInterval(intervalId);
+    }, [loadRoom]);
+
+    useEffect(() => {
+        if (room) {
+            updatePositions(room.words);
+        }
+    }, [room, updatePositions]);
+
+    useEffect(() => {
+        const onResize = () => {
+            if (room) {
+                updatePositions(room.words);
+            }
+        };
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, [room, updatePositions]);
+
+    if (error) {
+        return (
+            <div className="WordsBackground WordsBackground_state">
+                <h1>{error}</h1>
+                <a href={roomPath('', '').replace('/room/', '/')}>Создать новую комнату</a>
+            </div>
+        );
+    }
+
+    if (!room) {
+        return (
+            <div className="WordsBackground WordsBackground_state">
+                <h1>Загрузка комнаты...</h1>
+            </div>
+        );
+    }
+
+    const { config } = room;
+    const coverUrl = config.cover_url?.trim();
+    const backgroundImage = coverUrl
+        ? `linear-gradient(rgba(255,255,255,${config.cover_overlay}), rgba(255,255,255,${config.cover_overlay})), url(${coverUrl})`
+        : undefined;
 
     return (
-        <div ref={refDiv} className="WordsBackground">
-            {Object.entries(wordData).map(([word, value], i) => {
-                if (refDiv.current == undefined || value.pos == undefined) return;
-                const windowWidth = refDiv.current?.clientWidth;
-                const count = Math.max(value.count - delTime + value.time_st, 0);
-                if (count === 0) {
-                    return;
-                }
-                const size = 14 + ((count / MAX_COUNT) * windowWidth) / 25;
-                const color = getColor(count, 0, MAX_COUNT);
-                const top = `${5 + Math.min(Math.max(value.pos[1], 0), 80)}%`;
-                const left = `${10 + Math.min(Math.max(value.pos[0], 0), 70)}%`;
-                const duration = 1 + ((count - THRESHOLD) / (MAX_COUNT - THRESHOLD) / 100) * 3;
-                const isShaking = count >= THRESHOLD;
+        <div
+            ref={refDiv}
+            className="WordsBackground"
+            style={{
+                backgroundColor: config.background_color,
+                backgroundImage,
+                '--accent-color': config.accent_color,
+            } as CSSProperties}
+        >
+            <header className="WordsBackground__header">
+                <span>{room.id}</span>
+                <h1>{config.title}</h1>
+            </header>
 
-                return (
-                    <>
+            <div className="WordsBackground__field">
+                {room.words.map((word) => {
+                    const pos = positions[word.id];
+                    if (!pos) {
+                        return null;
+                    }
+
+                    const count = Math.max(word.score, 0);
+                    const fontSize = Math.max(18, Math.min(132, 16 + (count / config.max_points) * 104));
+                    const color = getColor(
+                        count,
+                        0,
+                        config.max_points,
+                        config.word_color_min,
+                        config.word_color_mid,
+                        config.word_color_max,
+                    );
+                    const top = `${Math.min(Math.max(pos[1], 4), 86)}%`;
+                    const left = `${Math.min(Math.max(pos[0], 5), 82)}%`;
+                    const isShaking = count >= config.shake_threshold;
+
+                    return (
                         <motion.div
-                            key={i}
-                            className="absolute select-none"
+                            key={word.id}
+                            className="WordsBackground__word"
                             style={{
-                                position: 'fixed',
                                 top,
                                 left,
-                                fontSize: size,
+                                fontSize,
                                 color,
-                                fontWeight: 'bold',
-                                whiteSpace: 'nowrap',
                             }}
                             animate={{
-                                y: isShaking ? [0, -3, 0] : [0],
-                                scale: isShaking ? [1, 1.05, 1] : [1],
-                                color: isShaking
-                                    ? ['#fe0', '#fb0', '#f00', '#f00', '#fb0', '#fe0']
-                                    : [color],
+                                y: isShaking ? [0, -4, 0] : [0],
+                                scale: isShaking ? [1, 1.06, 1] : [1],
                             }}
-                            layout
-                            transition={
-                                isShaking
-                                    ? {
-                                          repeat: Infinity,
-                                          duration,
-                                          layout: {
-                                              duration: 1.2,
-                                              ease: 'easeInOut',
-                                          },
-                                      }
-                                    : {
-                                          layout: {
-                                              duration: 1.2,
-                                              ease: 'easeInOut',
-                                          },
-                                      }
-                            }
+                            transition={{
+                                repeat: isShaking ? Infinity : 0,
+                                duration: isShaking ? 1.2 : 0.2,
+                            }}
                         >
-                            {limitString(value.text, 15)}
+                            {limitString(word.text, config.max_word_length)}
                         </motion.div>
-                        {/* {count >= THRESHOLD && (
-                            <motion.div
-                                style={{
-                                    position: 'absolute',
-                                    top,
-                                    left,
-                                    width: windowWidth,
-                                    height: 20,
-                                    borderRadius: '50%',
-                                    background:
-                                        'linear-gradient(to top, orange, yellow, transparent)',
-                                    transform: 'translateX(-50%)',
-                                    pointerEvents: 'none',
-                                    zIndex: -1,
-                                }}
-                                animate={{
-                                    y: [0, -4, 0],
-                                    scaleY: [0.8, 1.2, 0.8],
-                                    opacity: [0.7, 1, 0.7],
-                                }}
-                                transition={{
-                                    duration: 0.8,
-                                    repeat: Infinity,
-                                    ease: 'easeInOut',
-                                }}
-                            />
-                        )} */}
-                    </>
-                );
-            })}
+                    );
+                })}
+            </div>
+
+            {config.show_stats && (
+                <aside className="WordsBackground__stats">
+                    <span>Активны: {room.stats.active_users}</span>
+                    <span>Отправлено: {room.stats.accepted_submissions}</span>
+                    <span>Фильтр: {room.stats.bad_word_attempts}</span>
+                </aside>
+            )}
+
+            {config.show_qr_hint && (
+                <footer className="WordsBackground__hint">
+                    <span>{roomPath(room.id, '/send')}</span>
+                </footer>
+            )}
         </div>
     );
 });

@@ -1,0 +1,114 @@
+.CreateRoomPage {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1.1fr);
+    gap: 48px;
+    align-items: center;
+    padding: 48px clamp(20px, 6vw, 96px);
+    color: #16211d;
+    background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.74)),
+        url('../../../shared/assets/pattern.svg') right top / 34% auto repeat-y,
+        #f7fbf8;
+}
+
+.CreateRoomPage__intro {
+    max-width: 620px;
+}
+
+.CreateRoomPage__eyebrow {
+    margin: 0 0 12px;
+    color: #a15c1a;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.CreateRoomPage h1 {
+    margin: 0;
+    font-size: clamp(42px, 7vw, 78px);
+    line-height: 0.95;
+    letter-spacing: 0;
+}
+
+.CreateRoomPage__intro p:last-child {
+    max-width: 520px;
+    margin: 24px 0 0;
+    color: #45514d;
+    font-size: 18px;
+    line-height: 1.55;
+}
+
+.CreateRoomPage__workspace {
+    display: grid;
+    gap: 18px;
+}
+
+.CreateRoomPage__panel {
+    display: grid;
+    gap: 18px;
+    padding: 24px;
+    border: 1px solid #dfe8e3;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 20px 48px rgba(31, 49, 41, 0.08);
+}
+
+.CreateRoomPage__panel_secondary {
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.CreateRoomPage__panel h2 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.CreateRoomPage label {
+    display: grid;
+    gap: 8px;
+    color: #52615b;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.CreateRoomPage input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #cbd8d1;
+    border-radius: 6px;
+    padding: 13px 14px;
+    color: #16211d;
+    background: #fff;
+    font-size: 16px;
+}
+
+.CreateRoomPage button {
+    border: 0;
+    border-radius: 6px;
+    padding: 14px 18px;
+    color: #fff;
+    background: #1c7c54;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.CreateRoomPage button:disabled {
+    background: #99aca3;
+    cursor: not-allowed;
+}
+
+.CreateRoomPage__error {
+    margin: 0;
+    color: #a7352b;
+    font-weight: 700;
+}
+
+@media (max-width: 880px) {
+    .CreateRoomPage {
+        grid-template-columns: 1fr;
+        align-items: start;
+        gap: 28px;
+        padding-top: 32px;
+    }
+}

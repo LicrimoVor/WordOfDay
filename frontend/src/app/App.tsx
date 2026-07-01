@@ -1,27 +1,18 @@
 import { BrowserRouter } from 'react-router-dom';
 
-import Pattern from '@/shared/assets/pattern.svg';
-
-import { ConnectMqttProvider } from './providers/ConnectMqttProvider';
-import { ContextProvider } from './providers/ContextProvider';
 import { Router } from './route/router';
-import { ThemeProvider } from './providers/ThemeProvider';
 
 import './App.css';
 
 function App() {
+    const basename = import.meta.env.BASE_URL === '/' ? undefined : import.meta.env.BASE_URL.replace(/\/$/, '');
+
     return (
-        <ContextProvider>
-            <ThemeProvider>
-                <BrowserRouter basename="words">
-                    <ConnectMqttProvider>
-                        <div className="App">
-                            <Router />
-                        </div>
-                    </ConnectMqttProvider>
-                </BrowserRouter>
-            </ThemeProvider>
-        </ContextProvider>
+        <BrowserRouter basename={basename}>
+            <div className="App">
+                <Router />
+            </div>
+        </BrowserRouter>
     );
 }
 

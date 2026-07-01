@@ -1,49 +1,115 @@
 .FormPage {
-    height: 100vh;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 12px;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    box-sizing: border-box;
+    background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.76)),
+        url('../../../shared/assets/pattern.svg') right top / 42% auto repeat-y,
+        #f7fbf8;
 }
 
+.FormPage_state {
+    align-content: center;
+    gap: 14px;
+}
 
-.FormPageCard {
-    padding: 12px;
-    width: 320px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 24px;
+.FormPage_state h1 {
+    margin: 0;
+}
+
+.FormPage_state a {
+    color: #1c7c54;
+    font-weight: 800;
+}
+
+.FormPage__shell {
+    width: min(100%, 430px);
+    display: grid;
+    gap: 20px;
+    padding: 28px;
+    border: 1px solid rgba(22, 33, 29, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.84);
+    box-shadow: 0 18px 46px rgba(28, 49, 40, 0.1);
     backdrop-filter: blur(10px);
 }
 
-.is_singleton {
-    background-color: #f0000025;
+.FormPage__title {
+    display: grid;
+    gap: 6px;
 }
 
-.progress-bar {
-    height: 100%;
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
-    position: relative;
-    overflow: hidden;
-}
-    
-.progress-bar::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 0%;
-    background-color: #4caf50;
-    animation: fillAnimation 5s linear forwards;
+.FormPage__title span {
+    color: var(--accent-color, #1c7c54);
+    font-size: 13px;
+    font-weight: 900;
+    text-transform: uppercase;
 }
 
-@keyframes fillAnimation {
-    0% { width: 0%; }
-    100% { width: 100%; }
+.FormPage__title h1 {
+    margin: 0;
+    font-size: clamp(32px, 8vw, 52px);
+    line-height: 0.98;
+    letter-spacing: 0;
+}
+
+.FormPage__form {
+    display: grid;
+    gap: 14px;
+}
+
+.FormPage label {
+    display: grid;
+    gap: 8px;
+    color: #52615b;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.FormPage input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #cbd8d1;
+    border-radius: 6px;
+    padding: 15px 14px;
+    color: #17221d;
+    background: #fff;
+    font-size: 18px;
+}
+
+.FormPage button {
+    border: 0;
+    border-radius: 6px;
+    padding: 15px 18px;
+    color: #fff;
+    background: var(--accent-color, #1c7c54);
+    font-size: 17px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.FormPage button:disabled {
+    background: #94a69d;
+    cursor: not-allowed;
+}
+
+.FormPage__message {
+    margin: 0;
+    color: #1c7c54;
+    font-weight: 800;
+}
+
+.FormPage__message_error {
+    color: #a7352b;
+}
+
+.FormPage__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: #55655f;
+    font-size: 14px;
+    font-weight: 800;
 }

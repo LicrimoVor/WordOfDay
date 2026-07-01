@@ -1,6 +1,134 @@
 .WordsBackground {
+    position: relative;
     min-height: 100vh;
     min-width: 100vw;
-    /* padding: 0 400px; */
-    /* overflow: hidden; */
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    isolation: isolate;
+}
+
+.WordsBackground::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: url('../../../shared/assets/pattern.svg');
+    background-repeat: repeat-y;
+    background-position: right top;
+    background-size: 34% auto;
+    opacity: 0.18;
+}
+
+.WordsBackground_state {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 14px;
+    color: #17221d;
+}
+
+.WordsBackground_state h1 {
+    margin: 0;
+    font-size: clamp(28px, 5vw, 54px);
+}
+
+.WordsBackground_state a {
+    color: #1c7c54;
+    font-weight: 800;
+}
+
+.WordsBackground__header {
+    position: fixed;
+    top: 24px;
+    left: 28px;
+    z-index: 5;
+    color: #17221d;
+    text-shadow: 0 1px 18px rgba(255, 255, 255, 0.7);
+}
+
+.WordsBackground__header span {
+    color: var(--accent-color, #1c7c54);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.WordsBackground__header h1 {
+    margin: 4px 0 0;
+    font-size: clamp(26px, 4vw, 58px);
+    line-height: 1;
+    letter-spacing: 0;
+}
+
+.WordsBackground__field {
+    position: absolute;
+    inset: 0;
+}
+
+.WordsBackground__word {
+    position: fixed;
+    z-index: 2;
+    max-width: 92vw;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: 0;
+    white-space: nowrap;
+    text-shadow: 0 3px 18px rgba(255, 255, 255, 0.72);
+    user-select: none;
+}
+
+.WordsBackground__stats,
+.WordsBackground__hint {
+    position: fixed;
+    z-index: 6;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border: 1px solid rgba(22, 33, 29, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(10px);
+    color: #23322c;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.WordsBackground__stats {
+    right: 24px;
+    bottom: 24px;
+    padding: 12px 14px;
+}
+
+.WordsBackground__hint {
+    left: 24px;
+    bottom: 24px;
+    max-width: min(520px, calc(100vw - 48px));
+    padding: 12px 14px;
+    overflow: hidden;
+}
+
+.WordsBackground__hint span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+    .WordsBackground__header {
+        top: 18px;
+        left: 18px;
+    }
+
+    .WordsBackground__stats {
+        right: 12px;
+        bottom: 12px;
+        flex-wrap: wrap;
+    }
+
+    .WordsBackground__hint {
+        left: 12px;
+        bottom: 12px;
+    }
 }

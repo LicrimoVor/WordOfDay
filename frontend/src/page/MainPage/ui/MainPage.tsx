@@ -1,10 +1,14 @@
 import { FC, memo } from 'react';
+import { useParams } from 'react-router-dom';
 
 import { WordsBackground } from '@/features/WordsBackground';
 
-import './MainPage.css';
-
-/** Главная страница */
 export const MainPage: FC = memo(() => {
-    return <WordsBackground />;
+    const { roomId } = useParams();
+
+    if (!roomId) {
+        return null;
+    }
+
+    return <WordsBackground roomId={roomId} />;
 });
