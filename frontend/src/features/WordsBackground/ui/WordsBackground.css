@@ -67,6 +67,11 @@
     inset: 0;
 }
 
+.WordsBackground_finished {
+    min-height: 100vh;
+    overflow: auto;
+}
+
 .WordsBackground__word {
     position: fixed;
     z-index: 2;
@@ -77,6 +82,158 @@
     white-space: nowrap;
     text-shadow: 0 3px 18px rgba(255, 255, 255, 0.72);
     user-select: none;
+}
+
+.WordsBackground__effects {
+    position: fixed;
+    top: 26px;
+    left: 50%;
+    z-index: 12;
+    width: min(620px, calc(100vw - 32px));
+    display: grid;
+    gap: 10px;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.WordsBackground__effectImage,
+.WordsBackground__effectText {
+    overflow: hidden;
+    border: 1px solid rgba(22, 33, 29, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 18px 42px rgba(26, 46, 37, 0.16);
+    backdrop-filter: blur(12px);
+}
+
+.WordsBackground__effectImage {
+    display: grid;
+}
+
+.WordsBackground__effectImage img {
+    width: 100%;
+    max-height: 260px;
+    object-fit: cover;
+}
+
+.WordsBackground__effectImage strong,
+.WordsBackground__effectText {
+    padding: 16px 18px;
+    color: #17221d;
+    font-size: clamp(22px, 4vw, 42px);
+    line-height: 1.05;
+    text-align: center;
+}
+
+.WordsBackground__resultTitle,
+.WordsBackground__summary,
+.WordsBackground__bars {
+    position: relative;
+    z-index: 3;
+}
+
+.WordsBackground__results {
+    width: min(1120px, calc(100vw - 48px));
+    margin: 132px auto 42px;
+    display: grid;
+    gap: 18px;
+}
+
+.WordsBackground__resultTitle {
+    display: grid;
+    gap: 4px;
+}
+
+.WordsBackground__resultTitle span {
+    color: var(--accent-color, #1c7c54);
+    font-size: 13px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.WordsBackground__resultTitle h2 {
+    margin: 0;
+    color: #17221d;
+    font-size: clamp(34px, 6vw, 72px);
+    line-height: 0.96;
+}
+
+.WordsBackground__summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(130px, 1fr));
+    gap: 12px;
+}
+
+.WordsBackground__summary strong {
+    display: grid;
+    gap: 4px;
+    padding: 16px;
+    border: 1px solid rgba(22, 33, 29, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.78);
+    color: #17221d;
+    font-size: clamp(28px, 5vw, 52px);
+    line-height: 1;
+    backdrop-filter: blur(10px);
+}
+
+.WordsBackground__summary span {
+    color: #63726c;
+    font-size: 13px;
+    line-height: 1.2;
+}
+
+.WordsBackground__bars {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid rgba(22, 33, 29, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(10px);
+}
+
+.WordsBackground__bars p {
+    margin: 0;
+    color: #52615b;
+    font-weight: 900;
+}
+
+.WordsBackground__bar {
+    display: grid;
+    grid-template-columns: 38px minmax(100px, 220px) minmax(120px, 1fr) 58px;
+    gap: 10px;
+    align-items: center;
+    color: #23322c;
+}
+
+.WordsBackground__bar span,
+.WordsBackground__bar em {
+    color: #63726c;
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 900;
+}
+
+.WordsBackground__bar b {
+    overflow: hidden;
+    font-size: 16px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.WordsBackground__bar div {
+    overflow: hidden;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(22, 33, 29, 0.08);
+}
+
+.WordsBackground__bar i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #3867d6 0%, #f6c85f 50%, var(--accent-color, #d64045) 100%);
 }
 
 .WordsBackground__stats,
@@ -130,5 +287,23 @@
     .WordsBackground__hint {
         left: 12px;
         bottom: 12px;
+    }
+
+    .WordsBackground__effects {
+        top: 14px;
+    }
+
+    .WordsBackground__results {
+        width: min(calc(100% - 28px), 1120px);
+        margin-top: 112px;
+    }
+
+    .WordsBackground__summary,
+    .WordsBackground__bar {
+        grid-template-columns: 1fr;
+    }
+
+    .WordsBackground__bar {
+        gap: 6px;
     }
 }

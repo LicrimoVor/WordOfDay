@@ -24,6 +24,7 @@ from .storage import (
     clean_client_id,
     clear_words,
     create_room,
+    finish_room,
     generate_test_words,
     get_room_meta,
     start_new_round,
@@ -168,6 +169,15 @@ async def api_clear_words(room_id: str, redis: Redis = Depends(get_redis)) -> Ro
 )
 async def api_start_new_round(room_id: str, redis: Redis = Depends(get_redis)) -> RoomAdmin:
     return await start_new_round(redis, room_id)
+
+
+@app.post(
+    "/api/rooms/{room_id}/admin/finish",
+    response_model=RoomAdmin,
+    dependencies=[Depends(require_admin_token)],
+)
+async def api_finish_room(room_id: str, redis: Redis = Depends(get_redis)) -> RoomAdmin:
+    return await finish_room(redis, room_id)
 
 
 @app.post(

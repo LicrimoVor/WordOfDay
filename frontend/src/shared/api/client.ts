@@ -1,11 +1,18 @@
-export type ScenarioTrigger = 'manual' | 'time' | 'score';
+export type ScenarioTrigger = 'secret_word' | 'time' | 'first_message' | 'word_score';
+
+export type ScenarioEffect = 'main_image' | 'main_text' | 'form_text';
 
 export type Scenario = {
     id: string;
     name: string;
     trigger: ScenarioTrigger;
+    effect: ScenarioEffect;
     message: string;
-    boost: number;
+    image_url: string | null;
+    secret_word: string | null;
+    seconds_after_start: number;
+    score_threshold: number;
+    duration_seconds: number;
     active: boolean;
 };
 
@@ -14,10 +21,10 @@ export type RoomConfig = {
     cover_url: string | null;
     cover_overlay: number;
     background_color: string;
-    accent_color: string;
     word_color_min: string;
     word_color_mid: string;
     word_color_max: string;
+    letter_scale: number;
     word_gain: number;
     first_word_points: number;
     decay_per_second: number;
@@ -28,6 +35,7 @@ export type RoomConfig = {
     cooldown_seconds: number;
     one_submission_per_round: boolean;
     round_id: number;
+    is_finished: boolean;
     show_stats: boolean;
     show_qr_hint: boolean;
     scenarios: Scenario[];
@@ -39,6 +47,16 @@ export type WordView = {
     score: number;
     raw_score: number;
     updated_at: number;
+};
+
+export type RoomEffect = {
+    id: string;
+    scenario_id: string;
+    effect: ScenarioEffect;
+    text: string;
+    image_url: string | null;
+    created_at: number;
+    expires_at: number;
 };
 
 export type RoomStats = {
@@ -65,10 +83,19 @@ export type RoomPublic = {
     config: RoomConfig;
     words: WordView[];
     stats: RoomStats;
+    active_effects: RoomEffect[];
 };
 
 export type RoomAdmin = RoomPublic & {
     links: RoomLinks;
+};
+
+export type SubmitWordResult = {
+    accepted: boolean;
+    message: string;
+    words: WordView[];
+    stats: RoomStats;
+    active_effects: RoomEffect[];
 };
 
 type RequestOptions = {
@@ -145,13 +172,10 @@ export function getRoom(roomId: string) {
 }
 
 export function submitWord(roomId: string, text: string) {
-    return request<{ accepted: boolean; message: string; words: WordView[]; stats: RoomStats }>(
-        `/rooms/${roomId}/words`,
-        {
-            method: 'POST',
-            body: { text },
-        },
-    );
+    return request<SubmitWordResult>(`/rooms/${roomId}/words`, {
+        method: 'POST',
+        body: { text },
+    });
 }
 
 export function loginAdmin(roomId: string, password: string) {
@@ -185,6 +209,13 @@ export function clearRoomWords(roomId: string, token: string) {
 
 export function startNewRound(roomId: string, token: string) {
     return request<RoomAdmin>(`/rooms/${roomId}/admin/new-round`, {
+        method: 'POST',
+        token,
+    });
+}
+
+export function finishRoom(roomId: string, token: string) {
+    return request<RoomAdmin>(`/rooms/${roomId}/admin/finish`, {
         method: 'POST',
         token,
     });

@@ -3,12 +3,14 @@ import { Link, useParams } from 'react-router-dom';
 
 import {
     clearRoomWords,
+    finishRoom,
     generateTestWords,
     getAdminRoom,
     loginAdmin,
     RoomAdmin,
     RoomConfig,
     Scenario,
+    ScenarioEffect,
     ScenarioTrigger,
     startNewRound,
     updateRoomConfig,
@@ -19,9 +21,16 @@ import { createQrMatrix } from '@/shared/lib/qr';
 import './AdminPage.css';
 
 const triggerLabels: Record<ScenarioTrigger, string> = {
-    manual: 'Вручную',
-    time: 'По времени',
-    score: 'По очкам',
+    secret_word: 'Секретное слово',
+    time: 'Время',
+    first_message: 'Первое сообщение',
+    word_score: 'Очки слова',
+};
+
+const effectLabels: Record<ScenarioEffect, string> = {
+    main_image: 'Картинка сверху',
+    main_text: 'Текст на экране',
+    form_text: 'Текст в форме',
 };
 
 function tokenKey(roomId: string) {
@@ -40,9 +49,14 @@ function defaultScenario(): Scenario {
     return {
         id: `scenario-${Date.now()}`,
         name: 'Новый сценарий',
-        trigger: 'manual',
+        trigger: 'secret_word',
+        effect: 'main_text',
         message: '',
-        boost: 0,
+        image_url: null,
+        secret_word: '',
+        seconds_after_start: 30,
+        score_threshold: 30,
+        duration_seconds: 10,
         active: true,
     };
 }
@@ -126,7 +140,10 @@ function AdminPreview({ config }: { config: RoomConfig }) {
                 <strong>{config.title}</strong>
             </div>
             {words.map((word, index) => {
-                const fontSize = Math.max(16, Math.min(76, 16 + (word.score / config.max_points) * 62));
+                const fontSize = Math.max(
+                    14,
+                    Math.min(120, (16 + (word.score / config.max_points) * 62) * config.letter_scale),
+                );
                 const isHot = word.score >= config.shake_threshold;
                 return (
                     <span
@@ -194,7 +211,7 @@ export const AdminPage: FC = memo(() => {
         } catch (err) {
             const text = err instanceof Error ? err.message : 'Не удалось загрузить админку';
             setError(text);
-            if (text.toLowerCase().includes('токен') || text.toLowerCase().includes('401')) {
+            if (text.toLowerCase().includes('токен') || text.toLowerCase().includes('token') || text.includes('401')) {
                 localStorage.removeItem(tokenKey(roomId));
                 setToken('');
             }
@@ -254,6 +271,11 @@ export const AdminPage: FC = memo(() => {
             const nextRoom = await updateRoomConfig(roomId, token, {
                 ...draft,
                 cover_url: draft.cover_url?.trim() || null,
+                scenarios: draft.scenarios.map((scenario) => ({
+                    ...scenario,
+                    image_url: scenario.image_url?.trim() || null,
+                    secret_word: scenario.secret_word?.trim() || null,
+                })),
             });
             setRoom(nextRoom);
             setDraft(nextRoom.config);
@@ -271,6 +293,8 @@ export const AdminPage: FC = memo(() => {
         }
 
         setIsBusy(true);
+        setMessage('');
+        setError('');
         try {
             const nextRoom = await clearRoomWords(roomId, token);
             setRoom(nextRoom);
@@ -289,6 +313,8 @@ export const AdminPage: FC = memo(() => {
         }
 
         setIsBusy(true);
+        setMessage('');
+        setError('');
         try {
             const nextRoom = await startNewRound(roomId, token);
             setRoom(nextRoom);
@@ -296,6 +322,26 @@ export const AdminPage: FC = memo(() => {
             setMessage(`Раунд ${nextRoom.config.round_id} запущен`);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Не удалось начать новый раунд');
+        } finally {
+            setIsBusy(false);
+        }
+    };
+
+    const onFinishRoom = async () => {
+        if (!roomId || !token) {
+            return;
+        }
+
+        setIsBusy(true);
+        setMessage('');
+        setError('');
+        try {
+            const nextRoom = await finishRoom(roomId, token);
+            setRoom(nextRoom);
+            setDraft(nextRoom.config);
+            setMessage('Комната завершена');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Не удалось завершить комнату');
         } finally {
             setIsBusy(false);
         }
@@ -395,7 +441,7 @@ export const AdminPage: FC = memo(() => {
     }
 
     return (
-        <main className="AdminPage" style={{ '--accent-color': draft.accent_color } as CSSProperties}>
+        <main className="AdminPage" style={{ '--accent-color': draft.word_color_max } as CSSProperties}>
             <header className="AdminPage__header">
                 <div>
                     <span>{room.id}</span>
@@ -462,6 +508,9 @@ export const AdminPage: FC = memo(() => {
                             <span>попыток плохих слов</span>
                         </strong>
                     </div>
+                    <span className={draft.is_finished ? 'AdminPage__status AdminPage__status_done' : 'AdminPage__status'}>
+                        {draft.is_finished ? 'Комната завершена' : `Раунд ${draft.round_id} активен`}
+                    </span>
                 </section>
 
                 <section className="AdminPage__panel AdminPage__panel_preview">
@@ -493,14 +542,6 @@ export const AdminPage: FC = memo(() => {
                                 type="color"
                                 value={draft.background_color}
                                 onChange={(event) => setConfigValue('background_color', event.target.value)}
-                            />
-                        </label>
-                        <label>
-                            Акцент
-                            <input
-                                type="color"
-                                value={draft.accent_color}
-                                onChange={(event) => setConfigValue('accent_color', event.target.value)}
                             />
                         </label>
                         <label>
@@ -548,6 +589,17 @@ export const AdminPage: FC = memo(() => {
                                 type="range"
                                 value={draft.cover_overlay}
                                 onChange={(event) => setConfigValue('cover_overlay', Number(event.target.value))}
+                            />
+                        </label>
+                        <label>
+                            Scale высоты букв
+                            <input
+                                min={0.3}
+                                max={3}
+                                step={0.1}
+                                type="number"
+                                value={draft.letter_scale}
+                                onChange={(event) => setConfigValue('letter_scale', Number(event.target.value))}
                             />
                         </label>
                         <label>
@@ -669,6 +721,9 @@ export const AdminPage: FC = memo(() => {
                         <button disabled={isBusy} onClick={onClearWords} type="button">
                             Очистить слова
                         </button>
+                        <button disabled={isBusy || draft.is_finished} onClick={onFinishRoom} type="button">
+                            {draft.is_finished ? 'Завершено' : 'Завершить'}
+                        </button>
                     </div>
                 </section>
 
@@ -755,7 +810,24 @@ export const AdminPage: FC = memo(() => {
                                     </select>
                                 </label>
                                 <label>
-                                    Сообщение
+                                    Следствие
+                                    <select
+                                        value={scenario.effect}
+                                        onChange={(event) =>
+                                            updateScenario(scenario.id, {
+                                                effect: event.target.value as ScenarioEffect,
+                                            })
+                                        }
+                                    >
+                                        {Object.entries(effectLabels).map(([value, label]) => (
+                                            <option key={value} value={value}>
+                                                {label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <label className="AdminPage__scenarioWide">
+                                    Текст
                                     <input
                                         value={scenario.message}
                                         onChange={(event) =>
@@ -763,15 +835,72 @@ export const AdminPage: FC = memo(() => {
                                         }
                                     />
                                 </label>
+                                {scenario.trigger === 'secret_word' && (
+                                    <label>
+                                        Секретное слово
+                                        <input
+                                            value={scenario.secret_word || ''}
+                                            onChange={(event) =>
+                                                updateScenario(scenario.id, { secret_word: event.target.value })
+                                            }
+                                        />
+                                    </label>
+                                )}
+                                {scenario.trigger === 'time' && (
+                                    <label>
+                                        Время, сек.
+                                        <input
+                                            min={0}
+                                            max={86400}
+                                            type="number"
+                                            value={scenario.seconds_after_start}
+                                            onChange={(event) =>
+                                                updateScenario(scenario.id, {
+                                                    seconds_after_start: Number(event.target.value),
+                                                })
+                                            }
+                                        />
+                                    </label>
+                                )}
+                                {scenario.trigger === 'word_score' && (
+                                    <label>
+                                        Порог очков
+                                        <input
+                                            min={0}
+                                            max={500}
+                                            type="number"
+                                            value={scenario.score_threshold}
+                                            onChange={(event) =>
+                                                updateScenario(scenario.id, {
+                                                    score_threshold: Number(event.target.value),
+                                                })
+                                            }
+                                        />
+                                    </label>
+                                )}
+                                {scenario.effect === 'main_image' && (
+                                    <label className="AdminPage__scenarioWide">
+                                        Картинка URL
+                                        <input
+                                            value={scenario.image_url || ''}
+                                            placeholder="https://..."
+                                            onChange={(event) =>
+                                                updateScenario(scenario.id, { image_url: event.target.value })
+                                            }
+                                        />
+                                    </label>
+                                )}
                                 <label>
-                                    Бонус
+                                    Длительность, сек.
                                     <input
-                                        min={0}
-                                        max={100}
+                                        min={1}
+                                        max={3600}
                                         type="number"
-                                        value={scenario.boost}
+                                        value={scenario.duration_seconds}
                                         onChange={(event) =>
-                                            updateScenario(scenario.id, { boost: Number(event.target.value) })
+                                            updateScenario(scenario.id, {
+                                                duration_seconds: Number(event.target.value),
+                                            })
                                         }
                                     />
                                 </label>

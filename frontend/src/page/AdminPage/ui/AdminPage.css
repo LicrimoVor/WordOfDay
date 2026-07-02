@@ -278,6 +278,21 @@
     color: #a7352b !important;
 }
 
+.AdminPage__status {
+    width: fit-content;
+    padding: 8px 10px;
+    border-radius: 6px;
+    color: #52615b;
+    background: #eef4f0;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.AdminPage__status_done {
+    color: #125c3c;
+    background: #e3f4eb;
+}
+
 .AdminPage__preview {
     position: relative;
     min-height: 340px;
@@ -368,13 +383,17 @@
 
 .AdminPage__scenario {
     display: grid;
-    grid-template-columns: 1.1fr 160px 1.4fr 110px 120px auto;
+    grid-template-columns: repeat(4, minmax(160px, 1fr)) auto;
     gap: 10px;
     align-items: end;
     padding: 12px;
     border: 1px solid #dbe5df;
     border-radius: 8px;
     background: #f8fbf9;
+}
+
+.AdminPage__scenarioWide {
+    grid-column: span 2;
 }
 
 .AdminPage__scenario button {
@@ -400,6 +419,10 @@
         grid-template-columns: 1fr 1fr;
     }
 
+    .AdminPage__scenarioWide {
+        grid-column: span 2;
+    }
+
     .AdminPage__testControls {
         grid-template-columns: 1fr 1fr;
     }
@@ -420,6 +443,10 @@
     .AdminPage__qrBlock,
     .AdminPage__testControls {
         grid-template-columns: 1fr;
+    }
+
+    .AdminPage__scenarioWide {
+        grid-column: auto;
     }
 
     .AdminPage__qr,

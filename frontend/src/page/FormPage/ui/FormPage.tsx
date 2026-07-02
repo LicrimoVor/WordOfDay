@@ -30,6 +30,8 @@ export const FormPage: FC = memo(() => {
 
     useEffect(() => {
         loadRoom();
+        const intervalId = window.setInterval(loadRoom, 1200);
+        return () => window.clearInterval(intervalId);
     }, [loadRoom]);
 
     useEffect(() => {
@@ -41,9 +43,15 @@ export const FormPage: FC = memo(() => {
         return Math.max(0, Math.ceil((cooldownUntil - now) / 1000));
     }, [cooldownUntil, now]);
 
+    const formEffects = useMemo(() => {
+        return room?.active_effects.filter((effect) => effect.effect === 'form_text') || [];
+    }, [room]);
+
+    const isFinished = Boolean(room?.config.is_finished);
+
     const onSubmit = async (event: FormEvent) => {
         event.preventDefault();
-        if (!roomId || !text.trim() || isPending || cooldownLeft > 0) {
+        if (!roomId || !text.trim() || isPending || cooldownLeft > 0 || isFinished) {
             return;
         }
 
@@ -54,17 +62,18 @@ export const FormPage: FC = memo(() => {
         try {
             const response = await submitWord(roomId, text);
             setMessage(response.message);
+            setRoom((currentRoom) =>
+                currentRoom
+                    ? {
+                          ...currentRoom,
+                          words: response.words,
+                          stats: response.stats,
+                          active_effects: response.active_effects,
+                      }
+                    : currentRoom,
+            );
             if (response.accepted) {
                 setText('');
-                setRoom((currentRoom) =>
-                    currentRoom
-                        ? {
-                              ...currentRoom,
-                              words: response.words,
-                              stats: response.stats,
-                          }
-                        : currentRoom,
-                );
                 if (room?.config.cooldown_seconds) {
                     setCooldownUntil(Date.now() + room.config.cooldown_seconds * 1000);
                 }
@@ -97,7 +106,7 @@ export const FormPage: FC = memo(() => {
             className="FormPage"
             style={
                 {
-                    '--accent-color': room?.config.accent_color || '#1c7c54',
+                    '--accent-color': room?.config.word_color_max || '#1c7c54',
                     backgroundColor: room?.config.background_color || '#f7fbf8',
                 } as CSSProperties
             }
@@ -108,23 +117,36 @@ export const FormPage: FC = memo(() => {
                     <h1>{title}</h1>
                 </div>
 
+                {formEffects.length > 0 && (
+                    <div className="FormPage__effects">
+                        {formEffects.map((effect) => (
+                            <p key={effect.id}>{effect.text}</p>
+                        ))}
+                    </div>
+                )}
+
+                {isFinished && <p className="FormPage__message">Комната завершена, отправка закрыта</p>}
+
                 <form className="FormPage__form" onSubmit={onSubmit}>
                     <label>
                         Ваше слово
                         <input
                             value={text}
+                            disabled={isFinished}
                             maxLength={maxLength}
                             autoComplete="off"
                             placeholder="Напишите коротко"
                             onChange={(event) => setText(event.target.value)}
                         />
                     </label>
-                    <button disabled={isPending || !text.trim() || cooldownLeft > 0} type="submit">
-                        {cooldownLeft > 0
-                            ? `Подождите ${cooldownLeft}`
-                            : isPending
-                              ? 'Отправка...'
-                              : 'Отправить'}
+                    <button disabled={isPending || !text.trim() || cooldownLeft > 0 || isFinished} type="submit">
+                        {isFinished
+                            ? 'Завершено'
+                            : cooldownLeft > 0
+                              ? `Подождите ${cooldownLeft}`
+                              : isPending
+                                ? 'Отправка...'
+                                : 'Отправить'}
                     </button>
                 </form>
 
