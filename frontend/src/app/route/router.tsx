@@ -7,14 +7,8 @@ import { routeConfig } from '@/shared/route/route';
 export const Router: FC = () => {
     return (
         <Routes>
-            { Object.values(routeConfig).map((route) => {
-                return (
-                    <Route
-                        path={route.path}
-                        element={route.element}
-                        key={route.path}
-                    />
-                );
+            {Object.values(routeConfig).map((route) => {
+                return <Route path={route.path} element={route.element} key={route.path} />;
             })}
         </Routes>
     );

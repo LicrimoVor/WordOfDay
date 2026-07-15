@@ -77,7 +77,10 @@ export const CreateRoomPage = memo(() => {
                     {error && <p className="CreateRoomPage__error">{error}</p>}
                 </form>
 
-                <form className="CreateRoomPage__panel CreateRoomPage__panel_secondary" onSubmit={onOpenRoom}>
+                <form
+                    className="CreateRoomPage__panel CreateRoomPage__panel_secondary"
+                    onSubmit={onOpenRoom}
+                >
                     <h2>Открыть существующую</h2>
                     <label>
                         ID комнаты

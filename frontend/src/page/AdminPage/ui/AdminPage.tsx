@@ -1,4 +1,4 @@
-import { CSSProperties, FC, FormEvent, memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, CSSProperties, FC, FormEvent, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import {
@@ -17,6 +17,7 @@ import {
 } from '@/shared/api/client';
 import { getColor } from '@/features/WordsBackground/model/libs/getColor';
 import { createQrMatrix } from '@/shared/lib/qr';
+import { parseRoomSettings, serializeRoomSettings } from '../model/configTransfer';
 
 import './AdminPage.css';
 
@@ -185,6 +186,7 @@ export const AdminPage: FC = memo(() => {
     const [testWordsCount, setTestWordsCount] = useState(30);
     const [testWordsPoints, setTestWordsPoints] = useState(20);
     const [replaceTestWords, setReplaceTestWords] = useState(false);
+    const settingsFileInputRef = useRef<HTMLInputElement>(null);
 
     const links = useMemo(() => {
         if (!room) {
@@ -398,6 +400,50 @@ export const AdminPage: FC = memo(() => {
         }
     };
 
+    const exportSettings = () => {
+        if (!draft) {
+            return;
+        }
+
+        try {
+            const blob = new Blob([serializeRoomSettings(draft)], { type: 'application/json;charset=utf-8' });
+            const objectUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = objectUrl;
+            link.download = `word-of-day-${roomId}-settings.json`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(objectUrl);
+            setError('');
+            setMessage('Настройки экспортированы в JSON');
+        } catch {
+            setMessage('');
+            setError('Не удалось экспортировать настройки');
+        }
+    };
+
+    const importSettings = async (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) {
+            return;
+        }
+
+        setMessage('');
+        setError('');
+        try {
+            if (file.size > 1024 * 1024) {
+                throw new Error('Файл настроек слишком большой (максимум 1 МБ)');
+            }
+            const settings = parseRoomSettings(await file.text());
+            setDraft((current) => (current ? { ...current, ...settings } : current));
+            setMessage('Настройки загружены. Проверьте их и нажмите «Сохранить»');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Не удалось загрузить настройки');
+        }
+    };
+
     if (!roomId) {
         return null;
     }
@@ -519,7 +565,25 @@ export const AdminPage: FC = memo(() => {
                 </section>
 
                 <section className="AdminPage__panel AdminPage__panel_settings">
-                    <h2>Настройки</h2>
+                    <div className="AdminPage__sectionHeader">
+                        <h2>Настройки</h2>
+                        <div className="AdminPage__settingsTransfer">
+                            <button type="button" onClick={exportSettings}>
+                                Скачать JSON
+                            </button>
+                            <button type="button" onClick={() => settingsFileInputRef.current?.click()}>
+                                Загрузить JSON
+                            </button>
+                            <input
+                                ref={settingsFileInputRef}
+                                hidden
+                                accept="application/json,.json"
+                                aria-label="Загрузить настройки из JSON"
+                                type="file"
+                                onChange={importSettings}
+                            />
+                        </div>
+                    </div>
                     <div className="AdminPage__settingsGrid">
                         <label>
                             Название

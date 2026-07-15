@@ -4,6 +4,7 @@ import { AdminPage } from '@/page/AdminPage';
 import { CreateRoomPage } from '@/page/CreateRoomPage';
 import { FormPage } from '@/page/FormPage';
 import { MainPage } from '@/page/MainPage';
+import { NotFoundPage } from '@/page/NotFoundPage';
 
 interface Route {
     path: string;
@@ -19,11 +20,11 @@ const enum AppPages {
 }
 
 export const AppRoutes: Record<AppPages, string> = {
-    [AppPages.CREATE]: '/',
+    [AppPages.CREATE]: '/main',
     [AppPages.MAIN]: '/room/:roomId',
     [AppPages.FORM]: '/room/:roomId/send',
     [AppPages.ADMIN]: '/room/:roomId/admin',
-    [AppPages.NOT_FOUND]: '/*',
+    [AppPages.NOT_FOUND]: '*',
 };
 
 export const routeConfig: Record<AppPages, Route> = {
@@ -45,6 +46,6 @@ export const routeConfig: Record<AppPages, Route> = {
     },
     [AppPages.NOT_FOUND]: {
         path: AppRoutes.NOT_FOUND,
-        element: <CreateRoomPage />,
+        element: <NotFoundPage />,
     },
 };

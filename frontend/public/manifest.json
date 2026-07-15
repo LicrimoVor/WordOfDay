@@ -1,20 +1,27 @@
 {
-  "short_name": "Word app",
-  "name": "Word app",
-  "icons": [
-    {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo.png",
-      "type": "image/png",
-      "sizes": "256x256"
-    }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+    "id": ".",
+    "short_name": "Word of Day",
+    "name": "Word of Day — живое облако слов",
+    "description": "Интерактивные комнаты для сбора ответов и показа живого облака слов.",
+    "lang": "ru-RU",
+    "start_url": "./main",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "any",
+    "theme_color": "#1c7c54",
+    "background_color": "#f7fbf8",
+    "categories": ["education", "productivity", "utilities"],
+    "icons": [
+        {
+            "src": "favicon.ico",
+            "sizes": "any",
+            "type": "image/x-icon"
+        },
+        {
+            "src": "logo.ico",
+            "sizes": "any",
+            "type": "image/x-icon",
+            "purpose": "any"
+        }
+    ]
 }

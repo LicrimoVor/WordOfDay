@@ -67,7 +67,8 @@
 
 .AdminPage__actions,
 .AdminPage__roomActions,
-.AdminPage__sectionHeader {
+.AdminPage__sectionHeader,
+.AdminPage__settingsTransfer {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
