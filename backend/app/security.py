@@ -10,7 +10,7 @@ from typing import Any
 
 from fastapi import HTTPException, status
 
-from .config import settings
+from config import settings
 
 PASSWORD_ITERATIONS = 180_000
 TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60
@@ -75,7 +75,9 @@ def verify_admin_token(authorization: str | None, room_id: str) -> dict[str, Any
     try:
         payload_part, signature = token.split(".", 1)
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Некорректный токен") from exc
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Некорректный токен"
+        ) from exc
 
     expected_signature = _sign(payload_part)
     if not hmac.compare_digest(signature, expected_signature):
@@ -84,7 +86,9 @@ def verify_admin_token(authorization: str | None, room_id: str) -> dict[str, Any
     try:
         payload = json.loads(_b64_decode(payload_part).decode("utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as exc:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Некорректный токен") from exc
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Некорректный токен"
+        ) from exc
 
     if payload.get("room_id") != room_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Токен от другой комнаты")

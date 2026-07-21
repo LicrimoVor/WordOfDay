@@ -10,9 +10,9 @@ from typing import Any
 from fastapi import HTTPException, Request, status
 from redis.asyncio import Redis
 
-from .bad_words import has_bad_words
-from .config import settings
-from .models import (
+from bad_words import has_bad_words
+from config import settings
+from models import (
     CreateRoomRequest,
     CreateRoomResponse,
     GenerateTestWordsRequest,
@@ -27,7 +27,7 @@ from .models import (
     WordView,
     model_to_dict,
 )
-from .security import hash_password
+from security import hash_password
 
 ROOM_ID_ALPHABET = string.ascii_lowercase + string.digits
 ROOM_ID_RE = re.compile(r"^[a-z0-9]{6,12}$")
@@ -277,7 +277,9 @@ async def activate_matching_scenarios(
 
         matched = False
         if trigger == "secret_word":
-            matched = bool(scenario.secret_word and normalize_word(scenario.secret_word) == normalized_word)
+            matched = bool(
+                scenario.secret_word and normalize_word(scenario.secret_word) == normalized_word
+            )
         elif trigger == "first_message":
             matched = True
         elif trigger == "word_score":
@@ -408,7 +410,9 @@ async def finish_room(redis: Redis, room_id: str) -> RoomAdmin:
     return await build_admin_room(redis, room_id, updated_meta)
 
 
-async def generate_test_words(redis: Redis, room_id: str, payload: GenerateTestWordsRequest) -> RoomAdmin:
+async def generate_test_words(
+    redis: Redis, room_id: str, payload: GenerateTestWordsRequest
+) -> RoomAdmin:
     meta = await get_room_meta(redis, room_id)
     config = _parse_config(meta)
     now = time.time()
@@ -464,7 +468,9 @@ async def generate_test_words(redis: Redis, room_id: str, payload: GenerateTestW
     return await build_admin_room(redis, room_id, updated_meta)
 
 
-async def _submit_rejection(redis: Redis, room_id: str, config: RoomConfig, message: str) -> SubmitWordResponse:
+async def _submit_rejection(
+    redis: Redis, room_id: str, config: RoomConfig, message: str
+) -> SubmitWordResponse:
     stats = await build_stats(redis, room_id)
     words = await collect_words(redis, room_id, config, cleanup=True)
     active_effects = await collect_active_effects(redis, room_id)
@@ -564,7 +570,9 @@ async def submit_word(
     if accepted_before == 0:
         await activate_matching_scenarios(redis, room_id, config, "first_message")
     await activate_matching_scenarios(redis, room_id, config, "secret_word", word_text=text)
-    await activate_matching_scenarios(redis, room_id, config, "word_score", word_text=text, word_score=next_score)
+    await activate_matching_scenarios(
+        redis, room_id, config, "word_score", word_text=text, word_score=next_score
+    )
     await expire_room_keys(redis, room_id, config)
 
     words = await collect_words(redis, room_id, config, cleanup=True)

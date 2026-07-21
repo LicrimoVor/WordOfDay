@@ -37,3 +37,10 @@ Frontend работает под `/words/`, API проксируется на `h
 - `/words/room/:roomId/admin` - админ-панель с входом по паролю.
 
 Комната хранится в Redis и получает TTL на 3 дня. Любой запрос к комнате продлевает TTL; если запросов нет 3 дня, Redis удалит ключи комнаты.
+
+## Push Docker
+
+```bash
+docker tag <local-image> <your-username>/<local-image>:<tag>
+docker push <your-username>/<local-image>:<tag>
+```

@@ -4,8 +4,8 @@ from fastapi import Depends, FastAPI, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
-from .config import settings
-from .models import (
+from config import settings
+from models import (
     AdminLoginRequest,
     AdminLoginResponse,
     CreateRoomRequest,
@@ -17,8 +17,8 @@ from .models import (
     SubmitWordRequest,
     SubmitWordResponse,
 )
-from .security import create_admin_token, verify_admin_token, verify_password
-from .storage import (
+from security import create_admin_token, verify_admin_token, verify_password
+from storage import (
     build_admin_room,
     build_public_room,
     clean_client_id,
